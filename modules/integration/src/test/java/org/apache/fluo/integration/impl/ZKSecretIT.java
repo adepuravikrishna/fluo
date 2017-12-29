@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -27,20 +27,23 @@ import org.apache.fluo.api.client.FluoFactory;
 import org.apache.fluo.api.client.Snapshot;
 import org.apache.fluo.api.client.Transaction;
 import org.apache.fluo.api.config.FluoConfiguration;
-import org.apache.fluo.api.config.SimpleConfiguration;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.observer.ObserverProvider;
 import org.apache.fluo.integration.ITBaseMini;
 import org.apache.zookeeper.KeeperException.NoAuthException;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.api.observer.Observer.NotificationType.STRONG;
 
 public class ZKSecretIT extends ITBaseMini {
 
   public static class MyObserverProvider implements ObserverProvider {
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
     @Override
     public void provide(Registry or, Context ctx) {
@@ -82,7 +85,7 @@ public class ZKSecretIT extends ITBaseMini {
     FluoConfiguration conf = new FluoConfiguration(miniFluo.getClientConfiguration());
     conf.setZookeeperSecret("");
     try (FluoClient client = FluoFactory.newClient(conf)) {
-      Assert.fail("Expected client creation to fail.");
+      Assert.fail("Expected client creation to fail. " + client);
     } catch (Exception e) {
       boolean sawNoAuth = false;
       Throwable throwable = e;
@@ -118,7 +121,6 @@ public class ZKSecretIT extends ITBaseMini {
 
     ZooKeeper zk = getZookeeper();
 
-
     // Verify oracle gc timestamp is visible w/o a password. The GC iterator that runs in Accumulo
     // tablet servers reads this.
     String ts = new String(zk.getData(ZookeeperPath.ORACLE_GC_TIMESTAMP, false, null),
@@ -147,7 +149,6 @@ public class ZKSecretIT extends ITBaseMini {
         Assert.fail();
       } catch (NoAuthException nae) {
       }
-
 
       try {
         zk.getChildren(path, false);

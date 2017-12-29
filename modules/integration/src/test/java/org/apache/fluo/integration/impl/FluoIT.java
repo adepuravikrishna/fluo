@@ -32,7 +32,6 @@ import org.apache.fluo.api.config.FluoConfiguration;
 import org.apache.fluo.api.data.Bytes;
 import org.apache.fluo.api.data.Column;
 import org.apache.fluo.api.data.RowColumnValue;
-import org.apache.fluo.api.data.Span;
 import org.apache.fluo.api.exceptions.CommitException;
 import org.apache.fluo.api.observer.Observer.NotificationType;
 import org.apache.fluo.api.observer.ObserverProvider;
@@ -44,11 +43,15 @@ import org.apache.fluo.integration.ITBaseImpl;
 import org.apache.fluo.integration.TestTransaction;
 import org.apache.fluo.integration.TestUtil;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.apache.fluo.integration.BankUtil.BALANCE;
 
 public class FluoIT extends ITBaseImpl {
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(getTestTimeout());
 
   public static class FluoITObserverProvider implements ObserverProvider {
     @Override
@@ -463,8 +466,7 @@ public class FluoIT extends ITBaseImpl {
 
     HashSet<Column> columns = new HashSet<>();
 
-    CellScanner cellScanner =
-        tx2.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+    CellScanner cellScanner = tx2.scanner().over("d00001").fetch(new Column("outlink")).build();
     for (RowColumnValue rcv : cellScanner) {
       columns.add(rcv.getColumn());
     }
@@ -480,8 +482,7 @@ public class FluoIT extends ITBaseImpl {
 
     TestTransaction tx4 = new TestTransaction(env);
     columns.clear();
-    cellScanner =
-        tx4.scanner().over(Span.exact(Bytes.of("d00001"))).fetch(new Column("outlink")).build();
+    cellScanner = tx4.scanner().over("d00001").fetch(new Column("outlink")).build();
     for (RowColumnValue rcv : cellScanner) {
       columns.add(rcv.getColumn());
     }

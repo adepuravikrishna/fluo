@@ -4,9 +4,9 @@
  * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance with the License. You may obtain a
  * copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -17,6 +17,7 @@ package org.apache.fluo.integration;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.apache.accumulo.core.client.Connector;
 import org.apache.accumulo.core.client.Instance;
@@ -58,6 +59,19 @@ public class ITBase {
   private static AtomicInteger tableCounter = new AtomicInteger(1);
   protected static AtomicInteger testCounter = new AtomicInteger();
 
+  private final static long JUNIT_TIMEOUT_SECONDS = 120;
+
+  /**
+   * Gets the duration a test will run before timing out under the JUnit rule. This value is in
+   * seconds.
+   *
+   * @return long representation of the time in seconds
+   * @since 1.2.0
+   */
+  public static long getTestTimeout() {
+    return JUNIT_TIMEOUT_SECONDS;
+  }
+
   @BeforeClass
   public static void setUpAccumulo() throws Exception {
     instanceName = System.getProperty(IT_INSTANCE_NAME_PROP, "it-instance-default");
@@ -97,16 +111,20 @@ public class ITBase {
     return TABLE_BASE + tableCounter.incrementAndGet();
   }
 
-  protected void printSnapshot() throws Exception {
+  protected void printSnapshot(Consumer<String> out) throws Exception {
     try (Snapshot s = client.newSnapshot()) {
-      System.out.println("== snapshot start ==");
+      out.accept("== snapshot start ==");
 
       for (RowColumnValue rcv : s.scanner().build()) {
-        System.out.println(rcv.getRow() + " " + rcv.getColumn() + "\t" + rcv.getValue());
+        out.accept(rcv.getRow() + " " + rcv.getColumn() + "\t" + rcv.getValue());
       }
 
-      System.out.println("=== snapshot end ===");
+      out.accept("=== snapshot end ===");
     }
+  }
+
+  protected void printSnapshot() throws Exception {
+    printSnapshot(System.out::println);
   }
 
   @AfterClass
